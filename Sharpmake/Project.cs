@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
+using GlobExpressions;
 
 namespace Sharpmake
 {
@@ -118,6 +119,7 @@ namespace Sharpmake
         public Strings SourceFilesExclude = new Strings();                              // Excluded files from the project, removed from SourceFiles
 
         public Strings SourceFilesIncludeRegex = new Strings();                         // files that match SourceFilesIncludeRegex and SourceFilesExtension from source directory will make SourceFiles
+        public Strings SourceFilesIncludeWildcards = new Strings();                     // alternative way to add source files (wildcards instead of regex)
 
         public Strings SourceFilesFiltersRegex = new Strings();                         // Filters SourceFiles list
 
@@ -864,7 +866,16 @@ namespace Sharpmake
             }
 
             // Only scan directory for files if needed
-            if (SourceFilesExtensions.Count != 0 || ResourceFilesExtensions.Count != 0 || PRIFilesExtensions.Count != 0 || NoneExtensions.Count != 0 || NoneExtensionsCopyIfNewer.Count != 0)
+            if (SourceFilesIncludeWildcards.Count != 0)
+            {
+                // Use an explicit way to specify files.
+                foreach (string pattern in SourceFilesIncludeWildcards)
+                {
+                    SourceFiles.AddRange(Glob.Files(SourceRootPath, pattern).ToArray());
+                    Util.ResolvePath(SourceRootPath, ref SourceFiles);
+                }
+            }
+            else if (SourceFilesExtensions.Count != 0 || ResourceFilesExtensions.Count != 0 || PRIFilesExtensions.Count != 0 || NoneExtensions.Count != 0 || NoneExtensionsCopyIfNewer.Count != 0)
             {
                 string capitalizedSourceRootPath = Util.GetCapitalizedPath(SourceRootPath);
 
